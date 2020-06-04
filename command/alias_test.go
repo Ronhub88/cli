@@ -252,3 +252,60 @@ func TestAliasSet_invalid_command(t *testing.T) {
 
 	eq(t, err.Error(), "could not create alias: pe checkout does not correspond to a gh command")
 }
+
+func TestAliasDelete_nonexistent_command(t *testing.T) {
+	cfg := `---
+hosts:
+  github.com:
+    user: OWNER
+    oauth_token: token123
+aliases:
+  co: pr checkout
+  il: issue list --author="$1" --label="$2"
+  ia: issue list --author="$1" --assignee="$1"
+`
+	initBlankContext(cfg, "OWNER/REPO", "trunk")
+
+	_, err := RunCommand("alias delete cool")
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	eq(t, err.Error(), "no such alias cool")
+}
+
+func TestAliasDelete(t *testing.T) {
+	cfg := `---
+hosts:
+  github.com:
+    user: OWNER
+    oauth_token: token123
+aliases:
+  co: pr checkout
+  il: issue list --author="$1" --label="$2"
+  ia: issue list --author="$1" --assignee="$1"
+`
+	initBlankContext(cfg, "OWNER/REPO", "trunk")
+
+	buf := bytes.NewBufferString("")
+	defer config.StubWriteConfig(buf)()
+
+	output, err := RunCommand("alias delete co")
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	test.ExpectLines(t, output.String(), "Deleted alias co; was pr checkout")
+
+	expected := `hosts:
+    github.com:
+        user: OWNER
+        oauth_token: token123
+aliases:
+    il: issue list --author="$1" --label="$2"
+    ia: issue list --author="$1" --assignee="$1"
+`
+
+	eq(t, buf.String(), expected)
+
+}

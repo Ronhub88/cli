@@ -41,10 +41,6 @@ var aliasSetCmd = &cobra.Command{
 	RunE: aliasSet,
 }
 
-var aliasDeleteCmd = &cobra.Command{
-	Use: "alias delete <alias>",
-}
-
 func aliasSet(cmd *cobra.Command, args []string) error {
 	ctx := contextForCommand(cmd)
 	cfg, err := ctx.Config()
@@ -114,4 +110,44 @@ func processArgs(args []string) []string {
 	}
 
 	return newArgs
+}
+
+var aliasDeleteCmd = &cobra.Command{
+	Use:     "delete <alias>",
+	Short:   "Delete an alias.",
+	Args:    cobra.ExactArgs(1),
+	Example: "gh alias delete co",
+	RunE:    aliasDelete,
+}
+
+func aliasDelete(cmd *cobra.Command, args []string) error {
+	alias := args[0]
+
+	ctx := contextForCommand(cmd)
+	cfg, err := ctx.Config()
+	if err != nil {
+		return err
+	}
+
+	aliasCfg, err := cfg.Aliases()
+	if err != nil {
+		return err
+	}
+
+	if !aliasCfg.Exists(alias) {
+		return fmt.Errorf("no such alias %s", alias)
+	}
+
+	expansion := aliasCfg.Get(alias)
+
+	err = aliasCfg.Delete(alias)
+	if err != nil {
+		return fmt.Errorf("failed to delete alias %s: %w", alias, err)
+	}
+
+	out := colorableOut(cmd)
+	redCheck := utils.Red("✓")
+	fmt.Fprintf(out, "%s Deleted alias %s; was %s\n", redCheck, alias, expansion)
+
+	return nil
 }
