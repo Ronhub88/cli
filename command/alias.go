@@ -22,10 +22,8 @@ var aliasCmd = &cobra.Command{
 
 var aliasSetCmd = &cobra.Command{
 	Use: "set <alias> <expansion>",
-	// NB: Even when inside of a single-quoted string, cobra was noticing and parsing any flags
-	// used in an alias expansion string argument. Since this command needs no flags, I disabled their
-	// parsing. If we ever want to add flags to alias set we'll have to figure this out. I tested on
-	// linux in various shells against cobra 1.0; others on macos did /not/ see the same behavior.
+	// NB: this allows a user to eschew quotes when specifiying an alias expansion. We'll have to
+	// revisit it if we ever want to add flags to alias set but we have no current plans for that.
 	DisableFlagParsing: true,
 	Short:              "Create a shortcut for a gh command",
 	Long:               `This command lets you write your own shortcuts for running gh. They can be simple strings or accept placeholder arguments.`,
